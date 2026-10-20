@@ -432,6 +432,39 @@ class CleanupTests(unittest.TestCase):
     def environment_actions(self):
         return [call for call in self.calls if call[0] in ("control_tre.sh", "destroy_env_no_terraform.sh")]
 
+    def guards(self):
+        return [call for call in self.calls if "may-clean" in call]
+
+    def test_keep_decision_blocks_stop_and_destroy(self):
+        # Closed PR, deleted branch, inactive branch past each threshold, and an open PR.
+        for ref, missing, prs, hours in (
+            ("refs/pull/5085/merge", False, [], 60),
+            ("refs/pull/5085/merge", False, self.config["open_prs"], 6),
+            ("refs/heads/feature/deleted", True, [], 60),
+            ("refs/heads/feature/test", False, [], 6),
+            ("refs/heads/feature/test", False, [], 60),
+        ):
+            with self.subTest(ref=ref, missing=missing, prs=bool(prs), hours=hours):
+                self.config.update(
+                    groups=["rg-tretest\t" + ref],
+                    missing_branch=missing,
+                    open_prs=prs,
+                    age_hours=hours,
+                    activity_age_hours=hours,
+                    activity_decision="keep",
+                )
+                result = self.run_cleanup()
+                self.assertEqual(result.returncode, 0, result.stderr)
+                self.assertEqual(self.environment_actions(), [])
+                self.assertEqual(len(self.guards()), 1)
+                self.assertIn("A ci_keep_until tag keeps rg-tretest", result.stdout)
+
+    def test_kept_management_only_environment_is_not_destroyed(self):
+        self.config.update(groups=["rg-tretest-mgmt\trefs/pull/5085/merge"], open_prs=[], activity_decision="keep")
+        result = self.run_cleanup()
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(self.environment_actions(), [])
+
     def test_management_only_closed_pr_uses_core_name_for_destroy(self):
         self.config.update(groups=["rg-tretest-mgmt\trefs/pull/5085/merge"], open_prs=[])
         result = self.run_cleanup()
