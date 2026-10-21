@@ -41,6 +41,7 @@ jobs:
           CI_GIT_REF: refs/pull/11/merge
           CI_LOCATION: switzerlandnorth
           CI_AZURE_ENVIRONMENT: AzureCloud
+          CI_ENV_PREFIX: cgi
           TEST_BUNDLE: tre-service-azureml
         run: |
           set -euxo pipefail
@@ -105,17 +106,35 @@ jobs:
           - os: ubuntu-26.04
             az: "2.81.0"
             expect_install: failure
-          - os: ubuntu-26.04
+          - os: ubuntu-24.04
             az: "2.90.0"
             expect_install: success
           - os: ubuntu-26.04
-            az: "2.91.0"
+            az: "2.90.0"
             expect_install: success
     steps:
       - name: Checkout
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
         with:
           persist-credentials: false
+
+      # The runner images have no Azure CLI apt source, so apt knows only the installed version.
+      # https://learn.microsoft.com/cli/azure/install-azure-cli-linux?pivots=apt
+      - name: Add the Microsoft Azure CLI apt repository
+        run: |
+          set -euxo pipefail
+          sudo mkdir -p /etc/apt/keyrings
+          curl -sLS https://packages.microsoft.com/keys/microsoft.asc \
+            | gpg --dearmor | sudo tee /etc/apt/keyrings/microsoft.gpg > /dev/null
+          sudo chmod go+r /etc/apt/keyrings/microsoft.gpg
+          printf '%s\n' "Types: deb" \
+            "URIs: https://packages.microsoft.com/repos/azure-cli/" \
+            "Suites: $(lsb_release -cs)" \
+            "Components: main" \
+            "Architectures: $(dpkg --print-architecture)" \
+            "Signed-by: /etc/apt/keyrings/microsoft.gpg" \
+            | sudo tee /etc/apt/sources.list.d/azure-cli.sources
+          sudo apt-get update
 
       # Same commands as lets_encrypt.yml, with the version from the matrix
       - name: Install specific Azure CLI version
