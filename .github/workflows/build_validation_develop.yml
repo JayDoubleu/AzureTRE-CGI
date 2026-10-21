@@ -39,7 +39,7 @@ jobs:
       - name: "TEMP: set every path filter output to true"
         id: filter
         run: |
-          for key in terraform core core_version docs github_scripts ci_cleanup terraform_core terraform_workspaces terraform_shared_services terraform_workspace_services workspace_templates; do
+          for key in terraform core core_version docs ci_cleanup terraform_core terraform_workspaces terraform_shared_services terraform_workspace_services workspace_templates; do
             echo "${key}=true" >> "$GITHUB_OUTPUT"
           done
 
