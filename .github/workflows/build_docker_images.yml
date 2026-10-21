@@ -20,7 +20,7 @@ permissions:
 jobs:
   docker_build:
     name: Build images
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     permissions:
       contents: read
       actions: write # For uploading artifacts
@@ -38,35 +38,12 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Filter changes
-        uses: dorny/paths-filter@fbd0ab8f3e69293af611ebaee6363fc25e6d187d # v4.0.1
+      - name: "TEMP: set every path filter output to true"
         id: filter
-        with:
-          filters: |
-            api:
-              - 'api_app/**/*'
-            api_version:
-              - 'api_app/_version.py'
-            resource_processor:
-              - 'resource_processor/**/*'
-            resource_processor_version:
-              - 'resource_processor/_version.py'
-            guacamole_server:
-              - 'templates/workspace_services/guacamole/guacamole-server/**/*'
-            guacamole_server_version:
-              - 'templates/workspace_services/guacamole/guacamole-server/docker/version.txt'
-            gitea:
-              - 'templates/shared_services/gitea/docker/**/*'
-            gitea_version:
-              - 'templates/shared_services/gitea/docker/version.txt'
-            airlock_processor:
-              - 'airlock_processor/**/*'
-            airlock_processor_version:
-              - 'airlock_processor/_version.py'
-            ui_app:
-              - 'ui/app/**/*'
-            ui_app_version:
-              - 'ui/app/package.json'
+        run: |
+          for key in api api_version resource_processor resource_processor_version guacamole_server guacamole_server_version gitea gitea_version airlock_processor airlock_processor_version ui_app ui_app_version; do
+            echo "${key}=true" >> "$GITHUB_OUTPUT"
+          done
 
       - name: "Stale version: api"
         if: ${{ steps.filter.outputs.api == 'true' &&

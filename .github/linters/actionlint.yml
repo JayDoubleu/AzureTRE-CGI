@@ -16,3 +16,7 @@ paths:
   .github/workflows/pr_comment_bot.yml:
     ignore:
       - '^unexpected key "queue" for "concurrency" section\. expected one of "cancel-in-progress", "group"$'
+# TEMP: actionlint v1.7.12 does not know the ubuntu-26.04 label. Remove before merge.
+self-hosted-runner:
+  labels:
+    - ubuntu-26.04
