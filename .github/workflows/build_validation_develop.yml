@@ -19,7 +19,7 @@ permissions:
 jobs:
   lint:
     name: Lint
-    runs-on: ubuntu-26.04
+    runs-on: ubuntu-latest
     permissions:
       contents: read
       pull-requests: read # For paths-filter and super-linter
@@ -36,12 +36,93 @@ jobs:
           fetch-depth: 0
           persist-credentials: false
 
-      - name: "TEMP: set every path filter output to true"
+      - uses: dorny/paths-filter@fbd0ab8f3e69293af611ebaee6363fc25e6d187d # v4.0.1
         id: filter
-        run: |
-          for key in terraform core core_version docs ci_cleanup terraform_core terraform_workspaces terraform_shared_services terraform_workspace_services workspace_templates; do
-            echo "${key}=true" >> "$GITHUB_OUTPUT"
-          done
+        with:
+          filters: |
+            terraform:
+              # our Terraform uses more than just *.tf files, so need to check changes in the folder
+              - '**/terraform/**/*'
+            core:
+              - 'core/**/*'
+            core_version:
+              - 'core/version.txt'
+            docs:
+              - 'docs/**/*'
+            github_scripts:
+              - '.github/scripts/**'
+              - '.github/linters/actionlint.yml'
+              - '.github/workflows/deploy_tre.yml'
+              - '.github/workflows/deploy_tre_branch.yml'
+              - '.github/workflows/clean_validation_envs.yml'
+              - '.github/workflows/deploy_tre_reusable.yml'
+              - '.github/workflows/pr_comment_bot.yml'
+              - '.github/workflows/build_validation_develop.yml'
+              - '.github/workflows/build_all_dockerfiles.yml'
+              - '.devcontainer/Dockerfile'
+              - '.devcontainer/scripts/porter-v1.sh'
+              - 'devops/scripts/porter_build_bundle.sh'
+              - '**/porter-build-context.env'
+            ci_cleanup:
+              - 'Makefile'
+              - 'config_schema.json'
+              - 'core/terraform/outputs.tf'
+              - 'core/terraform/outputs.sh'
+              - 'core/terraform/write_outputs.sh'
+              - 'core/terraform/json-to-env.sh'
+              - 'devops/scripts/load_env.sh'
+              - 'devops/scripts/load_and_validate_env.sh'
+              - 'core/terraform/scripts/letsencrypt.sh'
+              - 'core/terraform/scripts/validate_certbot.sh'
+              - 'devops/scripts/clean_ci_validation_envs.sh'
+              - 'devops/scripts/storage_enable_public_access.sh'
+              - 'devops/scripts/bash_trap_helper.sh'
+              - 'devops/scripts/terraform_init.sh'
+              - 'devops/scripts/recover_bootstrap_lease.py'
+              - 'devops/scripts/ci_environment_id.py'
+              - 'devops/scripts/ci_cleanup_scope.py'
+              - 'devops/scripts/ci_cleanup_activity.py'
+              - 'devops/scripts/verify_deployment_lock.py'
+              - 'devops/scripts/destroy_ci_ref_env.py'
+              - 'devops/scripts/destroy_env_no_terraform.sh'
+              - 'devops/scripts/validate_ci_cleanup.py'
+              - 'devops/scripts/kv_add_network_exception.sh'
+              - 'core/terraform/deploy.sh'
+              - 'core/terraform/mgmt_storage_private_endpoint.sh'
+              - 'devops/terraform/**'
+              - '.github/actions/devcontainer_run_command/action.yml'
+              - '.github/workflows/deploy_tre_reusable.yml'
+              - '.github/workflows/deploy_tre_branch.yml'
+              - '.github/workflows/pr_comment_bot.yml'
+              - 'devops/tests/**'
+              - 'templates/shared_services/sonatype-nexus-vm/scripts/**'
+              - 'templates/shared_services/certs/**'
+              - 'templates/workspace_services/guacamole/user_resources/guacamole-azure-linuxvm/terraform/**'
+              - '.github/workflows/build_validation_develop.yml'
+              - '.github/workflows/clean_validation_envs.yml'
+
+            terraform_core:
+              - core/**/terraform/**/*.tf
+
+            terraform_workspaces:
+              - templates/workspaces/**/terraform/**/*.tf
+
+            terraform_shared_services:
+              - templates/shared_services/**/terraform/**/*.tf
+
+            terraform_workspace_services:
+              - templates/workspace_services/**/terraform/**/*.tf
+
+            workspace_templates:
+              - templates/workspaces/base/porter.yaml
+              - templates/workspaces/base/template_schema.json
+              - templates/workspaces/unrestricted/porter.yaml
+              - templates/workspaces/unrestricted/template_schema.json
+              - templates/workspaces/airlock-import-review/porter.yaml
+              - templates/workspaces/airlock-import-review/template_schema.json
+              - tests/requirements.txt
+              - tests/test_workspace_template_defaults.py
+              - .github/workflows/build_validation_develop.yml
 
       - name: Set up Node.js for GitHub scripts
         if: ${{ steps.filter.outputs.github_scripts == 'true' }}

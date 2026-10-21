@@ -17,7 +17,7 @@ permissions:
 jobs:
   test:
     name: Test Resource Processor and Porter compatibility
-    runs-on: ubuntu-26.04
+    runs-on: ubuntu-latest
     timeout-minutes: 10
     services:
       mongodb:
