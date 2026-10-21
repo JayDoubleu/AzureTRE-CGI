@@ -29,7 +29,8 @@ env:
 jobs:
   renew_letsencrypt_certs:
     name: Renew Lets Encrypt Certificates
-    runs-on: ubuntu-latest
+    # The pinned Azure CLI version has no Ubuntu 26.04 package
+    runs-on: ubuntu-24.04
     environment: ${{ github.event.inputs.environment || 'CICD' }}
     steps:
       - name: Checkout
